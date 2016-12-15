@@ -103,6 +103,9 @@ func (p *Properties) Decode(x interface{}) error {
 }
 
 func dec(p *Properties, key string, def *string, opts map[string]string, v reflect.Value) error {
+	if !v.IsValid() {
+		return fmt.Errorf("v is not valid (%v)", v)
+	}
 	t := v.Type()
 
 	// value returns the property value for key or the default if provided.
@@ -183,7 +186,11 @@ func dec(p *Properties, key string, def *string, opts map[string]string, v refle
 		v.Set(val)
 
 	case isPtr(t):
-		return dec(p, key, def, opts, v.Elem())
+		err := dec(p, key, def, opts, v.Elem())
+		if err != nil {
+			fmt.Printf("dec(%v, %v, %v, %v, %v) met error (%v)\n", p, key, def, opts, v.Elem(), err)
+		}
+		return err
 
 	case isStruct(t):
 		for i := 0; i < v.NumField(); i++ {
